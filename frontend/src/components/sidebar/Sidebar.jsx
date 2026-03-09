@@ -14,6 +14,9 @@ export const Sidebar = () => {
             {hasPermission(user, 'VIEW_STAFF') && <Link to='/staff'>Staff</Link>}
             {hasPermission(user, 'VIEW_ROLE') && <Link to='/role'>Role</Link>}
             {hasPermission(user, 'VIEW_TASK') && <Link to='/task'>Task</Link>}
+            {hasPermission(user, 'VIEW_PROJECT') && <Link to='/project'>PROJECT</Link>}
+            {hasPermission(user, 'VIEW_DOCUMENT') && <Link to='/document'>Document</Link>}
+            {hasPermission(user, 'APPROVE_DOCUMENT') && <Link to='/document-requests'>Document Requests</Link>}
             <button
                 onClick={logout}
                 className="btn-danger"

@@ -1,11 +1,11 @@
 import { createContext, useContext, useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 import { getStaff } from "../api/staffApi";
 import { getRoles } from "../api/roleApi";
 
 const AuthContext = createContext();
-
 export const AuthProvider = ({ children }) => {
+    const navigate = useNavigate();
 
     // Initialize user from localStorage for persistence
     const [user, setUser] = useState(() => {
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
         const hardcodedAdmin = {
             id: 'admin',
             name: "Initial Admin",
-            email: "admin@example.com",
+            email: "admin@gmail.com",
             password: "admin",
             roleData: {
                 name: "SUPER_ADMIN",
@@ -27,7 +27,9 @@ export const AuthProvider = ({ children }) => {
                     "VIEW_DASHBOARD", "VIEW_STAFF", "CREATE_STAFF", "UPDATE_STAFF", "DELETE_STAFF",
                     "VIEW_ROLE", "CREATE_ROLE", "UPDATE_ROLE", "DELETE_ROLE",
                     "VIEW_PERMISSION", "CREATE_PERMISSION", "UPDATE_PERMISSION", "DELETE_PERMISSION",
-                    "VIEW_TASK", "CREATE_TASK"
+                    "VIEW_TASK", "CREATE_TASK" , "UPDATE_TASK", "DELETE_TASK",
+                    "VIEW_PROJECT","CREATE_PROJECT", "UPDATE_PROJECT", "DELETE_PROJECT",
+                     "VIEW_DOCUMENT","CREATE_DOCUMENT","UPDATE_DOCUMENT","DELETE_DOCUMENT","APPROVE_DOCUMENT"
                 ]
             }
         };
@@ -49,7 +51,9 @@ export const AuthProvider = ({ children }) => {
                 let roles = [];
                 try {
                     roles = await getRoles();
-                } catch (e) { }
+                } catch (e) { 
+                    console.log(e)
+                }
 
                 // Backend role relation might be string/objectId or populated, normally _id from getAllRoles
                 const roleId = typeof staff.role === "object" ? staff.role._id : staff.role;
@@ -78,6 +82,7 @@ export const AuthProvider = ({ children }) => {
     const logout = () => {
         setUser(null);
         localStorage.removeItem("currentUser");
+        navigate("/login")
     };
 
     return (
@@ -86,8 +91,6 @@ export const AuthProvider = ({ children }) => {
         </AuthContext.Provider>
     );
 };
-
-// Custom hook (cleaner usage)
 export const useAuth = () => {
     return useContext(AuthContext)
 }

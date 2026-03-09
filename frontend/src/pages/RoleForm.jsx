@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { getRoles, createRole, updateRole } from "../api/roleApi";
 
 // Permission grid: resources x actions
-const RESOURCES = ["STAFF", "ROLE", "TASK", "DASHBOARD"];
+const RESOURCES = ["STAFF", "ROLE", "TASK", "DASHBOARD", "PROJECT", "DOCUMENT"];
 const ACTIONS = ["CREATE", "VIEW", "UPDATE", "DELETE"];
 
 export const RoleForm = () => {
@@ -144,6 +144,20 @@ export const RoleForm = () => {
                                         })}
                                     </tr>
                                 ))}
+                                <tr>
+                                    <td><strong>DOCUMENT APPROVALS</strong></td>
+                                    <td colSpan="4" style={{ textAlign: "center" }}>
+                                        <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPermissions.includes("APPROVE_DOCUMENT")}
+                                                onChange={() => handlePermissionToggle("APPROVE_DOCUMENT")}
+                                                style={{ transform: "scale(1.2)" }}
+                                            />
+                                            Can Approve Document Requests
+                                        </label>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>

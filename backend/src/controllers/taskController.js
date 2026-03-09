@@ -2,59 +2,72 @@ const mongoose = require("mongoose");
 const Task = require("../model/Task");
 const Staff = require("../model/Staff");
 
+
+// GET ALL TASKS
 exports.getTasks = async (req, res) => {
   try {
-    const tasks = await Task.find();
+
+    const tasks = await Task.find().populate("assignedTo", "name email");
+
     res.status(200).json(tasks);
+
   } catch (error) {
+
     res.status(500).json({
       message: "Server error",
-      error: error.message,
+      error: error.message
     });
+
   }
 };
 
+
+// CREATE TASK
 exports.createTask = async (req, res) => {
+
   try {
+
     const { title, description, assignedTo, status } = req.body;
 
-    // ✅ Validate required fields
-    if (!title || !description || !assignedTo || status === undefined) {
+    if (!title || !description || !assignedTo || assignedTo.length === 0) {
       return res.status(400).json({
-        message: "All fields are required",
+        message: "All fields are required"
       });
     }
 
-    // ✅ Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(assignedTo)) {
-      return res.status(400).json({
-        message: "Invalid assignedTo ID",
-      });
+    // Validate each staff ID
+    for (const staffId of assignedTo) {
+
+      if (!mongoose.Types.ObjectId.isValid(staffId)) {
+        return res.status(400).json({
+          message: "Invalid staff ID"
+        });
+      }
+
+      const staff = await Staff.findById(staffId);
+
+      if (!staff) {
+        return res.status(404).json({
+          message: "Assigned staff not found"
+        });
+      }
+
     }
 
-    // ✅ Check if assigned staff exists
-    const assignedUser = await Staff.findById(assignedTo);
-    console.log(assignedTo);
-
-    if (!assignedUser) {
-      return res.status(404).json({
-        message: "Assigned staff not found",
-      });
-    }
-
-    // ✅ Validate status
     if (!["Pending", "InProgress", "Completed"].includes(status)) {
       return res.status(400).json({
-        message: "Status must be pending or InProgress or Completed",
+        message: "Invalid status"
       });
     }
 
     const task = await Task.create({
+
       title,
       description,
       assignedTo,
       createdBy: req.body.createdBy || "System",
       status
+
     });
 
     res.status(201).json({
@@ -63,22 +76,30 @@ exports.createTask = async (req, res) => {
     });
 
   } catch (error) {
+
     console.error(error);
+
     res.status(500).json({
       message: "Server error",
       error: error.message
     });
+
   }
+
 };
+
+
+// UPDATE TASK
 exports.updateTask = async (req, res) => {
+
   try {
+
     const { id } = req.params;
     const { title, description, assignedTo, status } = req.body;
 
-    // ✅ Validate task ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message: "Invalid task ID",
+        message: "Invalid task ID"
       });
     }
 
@@ -86,41 +107,48 @@ exports.updateTask = async (req, res) => {
 
     if (!task) {
       return res.status(404).json({
-        message: "Task not found",
+        message: "Task not found"
       });
     }
 
-    // ✅ If assignedTo is being updated
-    if (assignedTo) {
-      if (!mongoose.Types.ObjectId.isValid(assignedTo)) {
-        return res.status(400).json({
-          message: "Invalid assignedTo ID",
-        });
-      }
+    // Update staff
+    if (assignedTo && assignedTo.length > 0) {
 
-      const assignedUser = await Staff.findById(assignedTo);
+      for (const staffId of assignedTo) {
 
-      if (!assignedUser) {
-        return res.status(404).json({
-          message: "Assigned staff not found",
-        });
+        if (!mongoose.Types.ObjectId.isValid(staffId)) {
+          return res.status(400).json({
+            message: "Invalid staff ID"
+          });
+        }
+
+        const staff = await Staff.findById(staffId);
+
+        if (!staff) {
+          return res.status(404).json({
+            message: "Assigned staff not found"
+          });
+        }
+
       }
 
       task.assignedTo = assignedTo;
+
     }
 
-    // ✅ If status is being updated
+    // Update status
     if (status) {
+
       if (!["Pending", "InProgress", "Completed"].includes(status)) {
         return res.status(400).json({
-          message: "Status must be Pending, InProgress or Completed",
+          message: "Invalid status"
         });
       }
 
       task.status = status;
+
     }
 
-    // ✅ Optional updates
     if (title) task.title = title;
     if (description) task.description = description;
 
@@ -128,25 +156,33 @@ exports.updateTask = async (req, res) => {
 
     res.status(200).json({
       message: "Task updated successfully",
-      task,
+      task
     });
 
   } catch (error) {
+
     console.error(error);
+
     res.status(500).json({
       message: "Server error",
-      error: error.message,
+      error: error.message
     });
+
   }
+
 };
+
+
+// DELETE TASK
 exports.deleteTask = async (req, res) => {
+
   try {
+
     const { id } = req.params;
 
-    // ✅ Validate task ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
-        message: "Invalid task ID",
+        message: "Invalid task ID"
       });
     }
 
@@ -154,19 +190,23 @@ exports.deleteTask = async (req, res) => {
 
     if (!task) {
       return res.status(404).json({
-        message: "Task not found",
+        message: "Task not found"
       });
     }
 
     res.status(200).json({
-      message: "Task deleted successfully",
+      message: "Task deleted successfully"
     });
 
   } catch (error) {
+
     console.error(error);
+
     res.status(500).json({
       message: "Server error",
-      error: error.message,
+      error: error.message
     });
+
   }
+
 };

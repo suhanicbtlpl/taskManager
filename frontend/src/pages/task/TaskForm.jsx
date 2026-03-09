@@ -5,148 +5,183 @@ import { getTasks, createTask, updateTask } from "../../api/taskApi";
 import { getStaff } from "../../api/staffApi";
 
 export const TaskForm = () => {
-    const { id } = useParams();
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const isEdit = !!id;
 
-    const [form, setForm] = useState({
-        title: "",
-        description: "",
-        assignedTo: "",
-        status: "Pending",
-    });
-    const [staffList, setStaffList] = useState([]);
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const isEdit = !!id;
 
-    useEffect(() => {
-        const fetchStaff = async () => {
-            try {
-                const staffData = await getStaff();
-                setStaffList(staffData);
-            } catch (error) {
-                console.error("Error fetching staff:", error);
-            }
-        };
-        fetchStaff();
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    assignedTo: [],
+    status: "Pending",
+  });
 
-        if (isEdit) {
-            const fetchTask = async () => {
-                try {
-                    const taskList = await getTasks();
-                    const existing = taskList.find((t) => t._id === id || t.id === Number(id));
-                    if (existing) {
-                        setForm({
-                            title: existing.title,
-                            description: existing.description,
-                            assignedTo: typeof existing.assignedTo === 'object' ? existing.assignedTo._id : existing.assignedTo,
-                            status: existing.status || "Pending",
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error fetching tasks:", error);
-                }
-            };
-            fetchTask();
-        }
-    }, [id, isEdit]);
+  const [staffList, setStaffList] = useState([]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+
+    const fetchStaff = async () => {
+      try {
+        const staffData = await getStaff();
+        setStaffList(staffData);
+      } catch (error) {
+        console.error("Error fetching staff:", error);
+      }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    fetchStaff();
 
-        const taskObj = {
-            ...form,
-            createdBy: user.name, // Record the name of the user who created the task
-        };
-
+    if (isEdit) {
+      const fetchTask = async () => {
         try {
-            if (isEdit) {
-                await updateTask(id, taskObj);
-            } else {
-                await createTask(taskObj);
-            }
-            navigate("/task");
+          const taskList = await getTasks();
+          const existing = taskList.find((t) => t._id === id);
+
+          if (existing) {
+            setForm({
+              title: existing.title,
+              description: existing.description,
+              assignedTo: existing.assignedTo || [],
+              status: existing.status || "Pending",
+            });
+          }
+
         } catch (error) {
-            console.error("Failed to save task", error);
-            alert("Failed to save task");
+          console.error("Error fetching task:", error);
         }
+      };
+
+      fetchTask();
+    }
+
+  }, [id, isEdit]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAssignChange = (staffId) => {
+
+    setForm((prev) => ({
+      ...prev,
+      assignedTo: prev.assignedTo.includes(staffId)
+        ? prev.assignedTo.filter((id) => id !== staffId)
+        : [...prev.assignedTo, staffId],
+    }));
+
+  };
+
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+
+    const taskObj = {
+      ...form,
+      createdBy: user.name,
     };
 
-    return (
-        <div className="admin-container">
-            <div className="admin-header">
-                <h1>{isEdit ? "Update Task" : "Create Task"}</h1>
-            </div>
+    try {
 
-            <div className="admin-card">
-                <form onSubmit={handleSubmit} className="admin-form">
-                    <div className="form-group">
-                        <label>Task Title</label>
-                        <input
-                            name="title"
-                            type="text"
-                            placeholder="Enter task title"
-                            value={form.title}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
+      if (isEdit) {
+        await updateTask(id, taskObj);
+      } else {
+        await createTask(taskObj);
+      }
 
-                    <div className="form-group">
-                        <label>Description</label>
-                        <textarea
-                            name="description"
-                            placeholder="Enter task description"
-                            value={form.description}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
+      navigate("/task");
 
-                    <div className="form-group">
-                        <label>Assign To (Staff)</label>
-                        <select
-                            name="assignedTo"
-                            value={form.assignedTo}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">Select Staff</option>
-                            {staffList.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name} ({s.email})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+    } catch (error) {
+      console.error("Failed to save task", error);
+      alert("Failed to save task");
+    }
+  };
 
-                    <div className="form-group">
-                        <label>Task Status</label>
-                        <select
-                            name="status"
-                            value={form.status}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="Pending">Pending</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                    </div>
+  return (
+    <div className="admin-container">
 
-                    <div className="form-actions">
-                        <button type="button" className="btn-secondary" onClick={() => navigate("/task")}>
-                            Cancel
-                        </button>
-                        <button type="submit" className="btn-primary">
-                            {isEdit ? "Update" : "Save"}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    );
+      <div className="admin-header">
+        <h1>{isEdit ? "Update Task" : "Create Task"}</h1>
+      </div>
+
+      <div className="admin-card">
+
+        <form onSubmit={handleSubmit} className="admin-form">
+
+          <div className="form-group">
+            <label>Task Title</label>
+            <input
+              name="title"
+              type="text"
+              value={form.title}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Assign Staff</label>
+
+            {staffList.map((staff) => (
+              <div key={staff._id}>
+
+                <input
+                  type="checkbox"
+                  checked={form.assignedTo.includes(staff._id)}
+                  onChange={() => handleAssignChange(staff._id)}
+                />
+
+                <label style={{ marginLeft: "6px" }}>
+                  {staff.name} ({staff.email})
+                </label>
+
+              </div>
+            ))}
+
+          </div>
+
+          <div className="form-group">
+            <label>Task Status</label>
+            <select
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+            >
+              <option value="Pending">Pending</option>
+              <option value="InProgress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => navigate("/task")}
+            >
+              Cancel
+            </button>
+
+            <button type="submit" className="btn-primary">
+              {isEdit ? "Update" : "Save"}
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
 };

@@ -12,7 +12,7 @@ exports.getStaff = async (req, res) => {
     });
   }
 };
-
+ 
 exports.createStaff = async (req, res) => {
   try {
     const { name, phoneNo, email, password, role } = req.body;

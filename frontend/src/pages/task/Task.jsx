@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getTasks, deleteTask } from "../api/taskApi";
-import { getStaff } from "../api/staffApi";
+import { getTasks,deleteTask } from "../../api/taskApi";
+import { getStaff } from "../../api/staffApi";
 
 export const Task = () => {
   const navigate = useNavigate();
@@ -23,16 +23,27 @@ export const Task = () => {
     fetchData();
   }, []);
 
-  const getStaffName = (staffId) => {
-    const staff = staffList.find(s => s._id === staffId || s.id === Number(staffId));
-    return staff ? staff.name : "Unknown";
+  const getStaffNames = (staffIds) => {
+    if (!Array.isArray(staffIds)) return "Unknown";
+
+    return staffIds
+      .map((id) => {
+        const staff = staffList.find((s) => s._id === id);
+        return staff ? staff.name : "Unknown";
+      })
+      .join(", ");
   };
 
   const handleDelete = async (id) => {
+    if (!id) {
+      console.error("Task ID is undefined");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
         await deleteTask(id);
-        setTasks((prev) => prev.filter((t) => t._id !== id && t.id !== id));
+        setTasks((prev) => prev.filter((t) => t._id !== id));
       } catch (error) {
         console.error("Failed to delete task", error);
         alert("Failed to delete task");
@@ -64,28 +75,37 @@ export const Task = () => {
                 <th>Actions</th>
               </tr>
             </thead>
+
             <tbody>
               {tasks.map((t) => (
-                <tr key={t.id}>
+                <tr key={t._id}>
                   <td>{t.title}</td>
                   <td>{t.description}</td>
                   <td>{t.createdBy}</td>
-                  <td>{getStaffName(t.assignedTo)}</td>
+
+                  <td>{getStaffNames(t.assignedTo)}</td>
+
                   <td>
-                    <span className={`status-badge ${t.status === "Completed" ? "active" : "inactive"}`}>
+                    <span
+                      className={`status-badge ${
+                        t.status === "Completed" ? "active" : "inactive"
+                      }`}
+                    >
                       {t.status || "Pending"}
                     </span>
                   </td>
+
                   <td>
                     <button
                       className="btn-secondary"
-                      onClick={() => navigate(`update/${t.id}`)}
+                      onClick={() => navigate(`update/${t._id}`)}
                     >
                       Edit
                     </button>
+
                     <button
                       className="btn-danger"
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => handleDelete(t._id)}
                       style={{ marginLeft: "8px" }}
                     >
                       Delete
@@ -94,6 +114,7 @@ export const Task = () => {
                 </tr>
               ))}
             </tbody>
+
           </table>
         )}
       </div>

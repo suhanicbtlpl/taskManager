@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStaff, deleteStaff } from "../../api/staffApi";
 import { getRoles } from "../../api/roleApi";
-
+import { useAuth } from "../../context/AuthContext";
 export const Staff = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [staffList, setStaffList] = useState([]);
@@ -29,17 +30,36 @@ export const Staff = () => {
     return role ? role.name : "No Role";
   };
 
+  // const handleDelete = async (id) => {
+  //   if (window.confirm("Are you sure you want to delete this staff member?")) {
+  //     try {
+  //       await deleteStaff(id);
+  //       setStaffList((prev) => prev.filter(s => s._id !== id && s.id !== id));
+  //     } catch (error) {
+  //       console.error("Failed to delete staff", error);
+  //       alert("Failed to delete staff");
+  //     }
+  //   }
+  // };
+
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this staff member?")) {
-      try {
-        await deleteStaff(id);
-        setStaffList((prev) => prev.filter(s => s._id !== id && s.id !== id));
-      } catch (error) {
-        console.error("Failed to delete staff", error);
-        alert("Failed to delete staff");
-      }
+        console.log(".........",roles)
+
+  if (!user?.permissions?.includes(user.role.permissions)) {
+    alert("You do not have permission to delete staff");
+    return;
+  }
+
+  if (window.confirm("Are you sure you want to delete this staff member?")) {
+    try {
+      await deleteStaff(id);
+      setStaffList((prev) => prev.filter(s => s._id !== id && s.id !== id));
+    } catch (error) {
+      console.error("Failed to delete staff", error);
+      alert("Failed to delete staff");
     }
-  };
+  }
+};
 
   return (
     <div className="admin-container">

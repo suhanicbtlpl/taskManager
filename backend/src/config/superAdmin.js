@@ -28,7 +28,7 @@ const superAdmin = async () => {
       name: "Super Admin",
       phoneNo: "9999999999",
       email: "admin@gmail.com",
-      password: 123456,
+      password: "admin",
       role: role._id
     });
 
