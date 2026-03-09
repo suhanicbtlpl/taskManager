@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; 
 import { useNavigate } from "react-router-dom";
-import { getTasks,deleteTask } from "../../api/taskApi";
+import { getTasks, deleteTask } from "../../api/taskApi";
 import { getStaff } from "../../api/staffApi";
 
 export const Task = () => {
@@ -11,11 +11,16 @@ export const Task = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const tasksData = await getTasks();
-        setTasks(tasksData);
+        const [tasksData, staffData] = await Promise.all([getTasks(), getStaff()]);
 
-        const staffData = await getStaff();
-        setStaffList(staffData);
+        // Normalize tasks: ensure assignedTo is always array of IDs
+        const normalizedTasks = tasksData.map(task => ({
+          ...task,
+          assignedTo: task.assignedTo?.map(s => s._id || s) || [],
+        }));
+
+        setTasks(normalizedTasks);
+        setStaffList(staffData || []);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -23,27 +28,22 @@ export const Task = () => {
     fetchData();
   }, []);
 
-  const getStaffNames = (staffIds) => {
-    if (!Array.isArray(staffIds)) return "Unknown";
+  const getStaffNames = (assignedTo) => {
+    if (!Array.isArray(assignedTo) || assignedTo.length === 0) return "None";
 
-    return staffIds
+    return assignedTo
       .map((id) => {
-        const staff = staffList.find((s) => s._id === id);
+        const staff = staffList.find((s) => (s._id || s).toString() === id.toString());
         return staff ? staff.name : "Unknown";
       })
       .join(", ");
   };
 
   const handleDelete = async (id) => {
-    if (!id) {
-      console.error("Task ID is undefined");
-      return;
-    }
-
     if (window.confirm("Are you sure you want to delete this task?")) {
       try {
         await deleteTask(id);
-        setTasks((prev) => prev.filter((t) => t._id !== id));
+        setTasks(prev => prev.filter(t => t._id !== id));
       } catch (error) {
         console.error("Failed to delete task", error);
         alert("Failed to delete task");
@@ -82,34 +82,15 @@ export const Task = () => {
                   <td>{t.title}</td>
                   <td>{t.description}</td>
                   <td>{t.createdBy}</td>
-
                   <td>{getStaffNames(t.assignedTo)}</td>
-
                   <td>
-                    <span
-                      className={`status-badge ${
-                        t.status === "Completed" ? "active" : "inactive"
-                      }`}
-                    >
+                    <span className={`status-badge ${t.status === "Completed" ? "active" : "inactive"}`}>
                       {t.status || "Pending"}
                     </span>
                   </td>
-
                   <td>
-                    <button
-                      className="btn-secondary"
-                      onClick={() => navigate(`update/${t._id}`)}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      className="btn-danger"
-                      onClick={() => handleDelete(t._id)}
-                      style={{ marginLeft: "8px" }}
-                    >
-                      Delete
-                    </button>
+                    <button className="btn-secondary" onClick={() => navigate(`update/${t._id}`)}>Edit</button>
+                    <button className="btn-danger" onClick={() => handleDelete(t._id)} style={{ marginLeft: "8px" }}>Delete</button>
                   </td>
                 </tr>
               ))}

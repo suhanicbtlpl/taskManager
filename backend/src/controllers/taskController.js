@@ -95,7 +95,7 @@ exports.updateTask = async (req, res) => {
   try {
 
     const { id } = req.params;
-    const { title, description, assignedTo, status } = req.body;
+    const { _id, __v, ...updateData } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
@@ -103,56 +103,35 @@ exports.updateTask = async (req, res) => {
       });
     }
 
-    const task = await Task.findById(id);
+    // Validate staff IDs if provided
+    if (updateData.assignedTo && Array.isArray(updateData.assignedTo)) {
+      for (const staffId of updateData.assignedTo) {
+        if (!mongoose.Types.ObjectId.isValid(staffId)) {
+          return res.status(400).json({ message: "Invalid staff ID" });
+        }
+        const staff = await Staff.findById(staffId);
+        if (!staff) {
+          return res.status(404).json({ message: "Assigned staff not found" });
+        }
+      }
+    }
+
+    // Validate status if provided
+    if (updateData.status && !["Pending", "InProgress", "Completed"].includes(updateData.status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const task = await Task.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate("assignedTo", "name email");
 
     if (!task) {
       return res.status(404).json({
         message: "Task not found"
       });
     }
-
-    // Update staff
-    if (assignedTo && assignedTo.length > 0) {
-
-      for (const staffId of assignedTo) {
-
-        if (!mongoose.Types.ObjectId.isValid(staffId)) {
-          return res.status(400).json({
-            message: "Invalid staff ID"
-          });
-        }
-
-        const staff = await Staff.findById(staffId);
-
-        if (!staff) {
-          return res.status(404).json({
-            message: "Assigned staff not found"
-          });
-        }
-
-      }
-
-      task.assignedTo = assignedTo;
-
-    }
-
-    // Update status
-    if (status) {
-
-      if (!["Pending", "InProgress", "Completed"].includes(status)) {
-        return res.status(400).json({
-          message: "Invalid status"
-        });
-      }
-
-      task.status = status;
-
-    }
-
-    if (title) task.title = title;
-    if (description) task.description = description;
-
-    await task.save();
 
     res.status(200).json({
       message: "Task updated successfully",

@@ -202,7 +202,14 @@ export const AuthRoute = () => {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="document/update/:id"
+          element={
+            <ProtectedRoute permission="UPDATE_DOCUMENT">
+              <DocumentForm />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="document-requests"
           element={

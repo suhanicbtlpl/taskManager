@@ -19,3 +19,7 @@ export const deleteProject = async (id) => {
   const res = await api.delete(`/admin/deleteProject/${id}`);
   return res.data;
 };
+export const updateProjectStaff = async (projectId, staffId) => {
+  const res = await api.patch(`/admin/updateProjectStaff/${projectId}`, { staffId });
+  return res.data;
+};

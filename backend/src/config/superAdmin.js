@@ -16,7 +16,13 @@ const superAdmin = async () => {
     if (!role) {
       role = await Role.create({
         name: "SuperAdmin",
-        permissions: [],
+        permissions: [
+                    "VIEW_DASHBOARD", "VIEW_STAFF", "CREATE_STAFF", "UPDATE_STAFF", "DELETE_STAFF",
+                    "VIEW_ROLE", "CREATE_ROLE", "UPDATE_ROLE", "DELETE_ROLE",
+                    "VIEW_PERMISSION", "CREATE_PERMISSION", "UPDATE_PERMISSION", "DELETE_PERMISSION",
+                    "VIEW_TASK", "CREATE_TASK" , "UPDATE_TASK", "DELETE_TASK",
+                    "VIEW_PROJECT","CREATE_PROJECT", "UPDATE_PROJECT", "DELETE_PROJECT",
+                     "VIEW_DOCUMENT","CREATE_DOCUMENT","UPDATE_DOCUMENT","DELETE_DOCUMENT","APPROVE_DOCUMENT"],
         status: 1
         });
       console.log("SuperAdmin role created");

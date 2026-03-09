@@ -1,4 +1,5 @@
 const Role = require("../model/Role");
+const Staff = require("../model/Staff"); // Add this at the top
 
 exports.getRoles = async (req, res) => {
   try {
@@ -84,23 +85,26 @@ exports.updateRole = async (req, res) => {
     });
   }
 };
-
 exports.deleteRole = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Find the role
     const role = await Role.findById(id);
-
     if (!role) {
       return res.status(404).json({
         message: "Role not found"
       });
     }
 
+    // Delete all staff with this role
+    await Staff.deleteMany({ role: id });
+
+    // Delete the role itself
     await Role.findByIdAndDelete(id);
 
     res.status(200).json({
-      message: "Role deleted successfully"
+      message: "Role and related staff deleted successfully"
     });
 
   } catch (error) {
@@ -110,3 +114,28 @@ exports.deleteRole = async (req, res) => {
     });
   }
 };
+// exports.deleteRole = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const role = await Role.findById(id);
+
+//     if (!role) {
+//       return res.status(404).json({
+//         message: "Role not found"
+//       });
+//     }
+
+//     await Role.findByIdAndDelete(id);
+
+//     res.status(200).json({
+//       message: "Role deleted successfully"
+//     });
+
+//   } catch (error) {
+//     res.status(500).json({
+//       message: "Server error",
+//       error: error.message
+//     });
+//   }
+// };

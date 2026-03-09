@@ -24,43 +24,34 @@ export const Document = () => {
 
 
   const handleDelete = async (id) => {
-    try {
-
-      await deleteDocument(id);
-
-      alert("Document Deleted");
-
-      fetchDocuments();
-
-    } catch (err) {
-      console.log(err);
+    if (window.confirm("Are you sure you want to delete this document?")) {
+      try {
+        await deleteDocument(id);
+        fetchDocuments();
+      } catch (err) {
+        console.log(err);
+        alert("Failed to delete document");
+      }
     }
   };
 
 
   const requestAccess = async (id) => {
-
-    // Using user object from AuthContext
     const userId = user?.id || user?._id;
-
     if (!userId) {
       alert("User not logged in!");
       return;
     }
 
     try {
-
       await requestDocumentAccess({
         documentId: id,
         userId: userId
       });
-
       alert("Request sent to admin");
-
     } catch (err) {
       console.log(err);
     }
-
   };
 
   const currentUserId = user?.id || user?._id;
@@ -69,102 +60,94 @@ export const Document = () => {
   const canCreateDocs = hasPermission(user, 'CREATE_DOCUMENT');
 
   return (
+    <div className="admin-container">
+      <div className="admin-header">
+        <h1>Documents</h1>
+        {canCreateDocs && (
+          <Link to="/document/create">
+            <button className="btn-primary">Add Document</button>
+          </Link>
+        )}
+      </div>
 
-    <div>
-
-      <h2>Documents</h2>
-
-      {canCreateDocs && (
-        <Link to="/document/create">
-          <button>Add Document</button>
-        </Link>
-      )}
-
-      <br /><br />
-
-      <table border="1" cellPadding="10">
-
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Type</th>
-            <th>File</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-
-        <tbody>
-
-          {documents.map((doc) => {
-            const isUploader = doc.uploadedBy === String(currentUserId);
-            const isSuperAdmin = user?.roleData?.name === 'SUPER_ADMIN';
-
-            // Find if this user has been granted specific access
-            const userAccess = doc.accessUsers?.find(au => {
-              const auId = au.userId?._id || au.userId || au?._id || au;
-              return String(auId) === String(currentUserId);
-            });
-
-            // By default, if userAccess exists but doesn't have a permissions array, we assume it's the old format = VIEW access.
-            const grantedPerms = userAccess?.permissions || (userAccess ? ["VIEW"] : []);
-
-            const canView = isSuperAdmin || isUploader || grantedPerms.includes("VIEW");
-            const canEdit = isSuperAdmin || isUploader || grantedPerms.includes("UPDATE") || canEditDocs; // fallback to global UPDATE_DOCUMENT if they have it
-            const canDelete = isSuperAdmin || isUploader || grantedPerms.includes("DELETE") || canDeleteDocs;
-
-            // They can request access only if they are not the uploader, not a super admin, and don't already have some permissions.
-            // Actually, if they only have VIEW, maybe they want to request UPDATE or DELETE? 
-            // For now, let's keep it simple: if they have NO permissions, show Request.
-            // Or we just show request if they aren't the uploader or super admin. 
-            // Let's show Request if they don't have all permissions.
-            // A simple approach is just: if no userAccess found, show Request.
-            const needsRequest = !isSuperAdmin && !isUploader && !userAccess;
-
-            return (
-              <tr key={doc._id}>
-                <td>{doc.name}</td>
-                <td>{doc.fileType}</td>
-                <td>
-                  {canView ? (
-                    <a
-                      href={`http://localhost:3001/uploads/${doc.file}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      View
-                    </a>
-                  ) : (
-                    <span>Access Denied</span>
-                  )}
-                </td>
-                <td>
-                  {needsRequest && (
-                    <button onClick={() => requestAccess(doc._id)}>
-                      Request Access
-                    </button>
-                  )}
-
-                  {canEdit && (
-                    <Link to={`/document/create/${doc._id}`}>
-                      <button>Edit</button>
-                    </Link>
-                  )}
-
-                  {canDelete && (
-                    <button onClick={() => handleDelete(doc._id)}>
-                      Delete
-                    </button>
-                  )}
-
-                </td>
+      <div className="admin-card">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>File</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {documents.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="no-data">No documents found</td>
               </tr>
-            );
-          })}
+            ) : (
+              documents.map((doc) => {
+                const isUploader = String(doc.uploadedBy) === String(currentUserId);
+                const isSuperAdmin = user?.roleData?.name === 'SUPER_ADMIN';
 
-        </tbody>
+                const userAccess = doc.accessUsers?.find(au => {
+                  const auId = au.userId?._id || au.userId || au?._id || au;
+                  return String(auId) === String(currentUserId);
+                });
 
-      </table>
+                const grantedPerms = userAccess?.permissions || (userAccess ? ["VIEW"] : []);
 
+                const canView = isSuperAdmin || isUploader || grantedPerms.includes("VIEW");
+                const canEdit = isSuperAdmin || isUploader || grantedPerms.includes("UPDATE") || canEditDocs;
+                const canDelete = isSuperAdmin || isUploader || grantedPerms.includes("DELETE") || canDeleteDocs;
+                const needsRequest = !isSuperAdmin && !isUploader && !userAccess;
+
+                return (
+                  <tr key={doc._id}>
+                    <td>{doc.name}</td>
+                    <td><span className="status-badge active">{doc.fileType}</span></td>
+                    <td>
+                      {canView ? (
+                        <a
+                          href={`http://localhost:3001/uploads/${doc.file}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ color: 'var(--primary-color)', fontWeight: '500' }}
+                        >
+                          View File
+                        </a>
+                      ) : (
+                        <span style={{ color: 'var(--text-muted)' }}>Access Denied</span>
+                      )}
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        {needsRequest && (
+                          <button className="btn-secondary" onClick={() => requestAccess(doc._id)}>
+                            Request Access
+                          </button>
+                        )}
+
+                        {canEdit && (
+                          <Link to={`/document/update/${doc._id}`}>
+                            <button className="btn-secondary">Edit</button>
+                          </Link>
+                        )}
+
+                        {canDelete && (
+                          <button className="btn-danger" onClick={() => handleDelete(doc._id)}>
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

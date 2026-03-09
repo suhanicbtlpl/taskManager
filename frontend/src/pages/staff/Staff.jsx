@@ -115,7 +115,7 @@ export const Staff = () => {
                 <tr key={item._id || item.id}>
                   <td>{item.name}</td>
                   <td>{item.email}</td>
-                  <td>{item.phone || "N/A"}</td>
+                  <td>{item.phoneNo || "N/A"}</td>
                   <td>{getRoleName(item.role)}</td>
                   <td>
                     <button

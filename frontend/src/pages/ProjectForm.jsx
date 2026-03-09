@@ -5,231 +5,164 @@ import { getStaff } from "../api/staffApi";
 import { getTasks } from "../api/taskApi";
 
 export const ProjectForm = () => {
-
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = !!id;
 
   const [staffList, setStaffList] = useState([]);
   const [taskList, setTaskList] = useState([]);
-
   const [project, setProject] = useState({
     name: "",
+    description: "",
     assignedStaff: [],
     tasks: []
   });
 
   useEffect(() => {
-
     const fetchData = async () => {
-      const staffData = await getStaff();
-      const taskData = await getTasks();
-
-      setStaffList(staffData);
-      setTaskList(taskData);
+      try {
+        const [staffData, taskData] = await Promise.all([getStaff(), getTasks()]);
+        setStaffList(staffData || []);
+        setTaskList(taskData || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
     };
-
     fetchData();
-
   }, []);
 
   useEffect(() => {
-
     if (isEdit) {
-
       const fetchProject = async () => {
-
-        const data = await getProjects();
-
-        const existing = data.find(
-          (item) => item._id === id || item.id === Number(id)
-        );
-
-        if (existing) {
-          setProject({
-            ...existing,
-            assignedStaff: existing.assignedStaff?.map(s => s._id || s) || [],
-            tasks: existing.tasks?.map(t => t._id || t) || []
-          });
+        try {
+          const data = await getProjects();
+          const existing = data.find((item) => item._id === id);
+          if (existing) {
+            setProject({
+              ...existing,
+              assignedStaff: existing.assignedStaff?.map(s => s._id || s) || [],
+              tasks: existing.tasks?.map(t => t._id || t) || []
+            });
+          }
+        } catch (err) {
+          console.error("Error fetching project:", err);
         }
-
       };
-
       fetchProject();
     }
-
   }, [id, isEdit]);
 
   const handleChange = (e) => {
-
     const { name, value } = e.target;
-
-    setProject((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-
+    setProject(prev => ({ ...prev, [name]: value }));
   };
 
-//   const handleStaffChange = (e) => {
-
-//     const selected = Array.from(
-//       e.target.selectedOptions,
-//       (option) => option.value
-//     );
-
-//     setProject((prev) => ({
-//       ...prev,
-//       assignedStaff: selected
-//     }));
-
-//   };
-
-  const handleTaskChange = (e) => {
-
-    const selected = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-
-    setProject((prev) => ({
-      ...prev,
-      tasks: selected
-    }));
-
+  const handleToggle = (field, itemId) => {
+    setProject(prev => {
+      const current = prev[field] || [];
+      const updated = current.includes(itemId)
+        ? current.filter(id => id !== itemId)
+        : [...current, itemId];
+      return { ...prev, [field]: updated };
+    });
   };
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
+    const payload = {
+      name: project.name,
+      description: project.description,
+      assignedStaff: project.assignedStaff,
+      tasks: project.tasks
+    };
 
     try {
-
       if (isEdit) {
-        await updateProject(id, project);
+        await updateProject(id, payload);
       } else {
-        await createProject(project);
+        await createProject(payload);
       }
-
       navigate("/project");
-
     } catch (error) {
       console.error("Failed to save project", error);
+      alert("Failed to save project. Please check if project name is unique.");
     }
-
   };
 
   return (
     <div className="admin-container">
-
       <div className="admin-header">
-        <h1>{isEdit ? "Update Project" : "Create Project"}</h1>
+        <h1>{isEdit ? "Edit Project" : "Create Project"}</h1>
       </div>
 
       <div className="admin-card">
-
         <form onSubmit={handleSubmit} className="admin-form">
-
           <div className="form-group">
             <label>Project Name</label>
-
             <input
               type="text"
               name="name"
+              placeholder="e.g. Website Redesign"
               value={project.name}
               onChange={handleChange}
               required
             />
           </div>
 
-          {/* <div className="form-group">
-            <label>Assign Staff</label>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea
+              name="description"
+              placeholder="Brief overview of the project"
+              value={project.description || ""}
+              onChange={handleChange}
+            />
+          </div>
 
-            <select
-              multiple
-              value={project.assignedStaff}
-              onChange={handleStaffChange}
-            >
+          <div className="form-group">
+            <label>Assign Staff (Team members)</label>
+            <div className="checkbox-group">
               {staffList.map((staff) => (
-                <option key={staff._id} value={staff._id}>
+                <label key={staff._id} className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={project.assignedStaff.includes(staff._id)}
+                    onChange={() => handleToggle("assignedStaff", staff._id)}
+                  />
                   {staff.name}
-                </option>
+                </label>
               ))}
-            </select>
-          </div> */}
+              {staffList.length === 0 && <p className="no-data">No staff members found</p>}
+            </div>
+          </div>
 
           <div className="form-group">
-  <label>Assign Staff</label>
-
-  {staffList.map((staff) => (
-    <div key={staff._id}>
-      <input
-        type="checkbox"
-        value={staff._id}
-        checked={project.assignedStaff.includes(staff._id)}
-        onChange={(e) => {
-          const staffId = e.target.value;
-
-          if (e.target.checked) {
-            setProject({
-              ...project,
-              assignedStaff: [...project.assignedStaff, staffId]
-            });
-          } else {
-            setProject({
-              ...project,
-              assignedStaff: project.assignedStaff.filter(
-                (id) => id !== staffId
-              )
-            });
-          }
-        }}
-      />
-
-      {staff.name}
-    </div>
-  ))}
-</div>
-
-          <div className="form-group">
-            <label>Assign Tasks</label>
-
-            <select
-              multiple
-              value={project.tasks}
-              onChange={handleTaskChange}
-            >
+            <label>Link Tasks</label>
+            <div className="checkbox-group">
               {taskList.map((task) => (
-                <option key={task._id} value={task._id}>
+                <label key={task._id} className="checkbox-item">
+                  <input
+                    type="checkbox"
+                    checked={project.tasks.includes(task._id)}
+                    onChange={() => handleToggle("tasks", task._id)}
+                  />
                   {task.title}
-                </option>
+                </label>
               ))}
-            </select>
+              {taskList.length === 0 && <p className="no-data">No tasks found</p>}
+            </div>
           </div>
 
           <div className="form-actions">
-
-            <button
-              type="button"
-              className="btn-secondary"
-              onClick={() => navigate("/project")}
-            >
+            <button type="button" className="btn-secondary" onClick={() => navigate("/project")}>
               Cancel
             </button>
-
-            <button
-              type="submit"
-              className="btn-primary"
-            >
-              {isEdit ? "Update" : "Create"}
+            <button type="submit" className="btn-primary">
+              {isEdit ? "Save Changes" : "Create Project"}
             </button>
-
           </div>
-
         </form>
-
       </div>
-
     </div>
   );
 };

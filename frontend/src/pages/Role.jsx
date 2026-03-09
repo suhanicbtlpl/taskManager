@@ -84,6 +84,7 @@ export const Role = () => {
             </tbody> */}
             <tbody>
               {roles.map((r) => (
+                // if(r.name=="")
                 <tr key={r._id}>
                   <td>{r.name}</td>
                   <td>{r.action || "USER"}</td>

@@ -1,12 +1,14 @@
-  const express = require("express");
-  const router = express.Router();
-  const authorize = require("../middlware/authorize");
-  const authMiddleware = require("../middlware/authMiddleware");
+
+const express = require("express");
+const router = express.Router();
+const authorize = require("../middlware/authorize");
+const authMiddleware = require("../middlware/authMiddleware");
+
 const upload = require("../middlware/upload");
-  const {
-    registerAdmin,
-    loginAdmin,
-  } = require("../controllers/adminController");
+const {
+  registerAdmin,
+  loginAdmin,
+} = require("../controllers/adminController");
 
   const {
     getRoles,
@@ -27,7 +29,8 @@ const upload = require("../middlware/upload");
     getProjects,
     createProject,
     updateProject,
-    deleteProject
+    deleteProject,
+    updateProjectStaff
   } = require("../controllers/projectController")
 
   
@@ -72,6 +75,8 @@ const {
   upload.single("file"),
   createDocument
 );
+// Toggle staff for a project
+router.patch("/updateProjectStaff/:id", updateProjectStaff);
   router.put("/updateDocument/:id", updateDocument);
   router.delete("/deleteDocument/:id", deleteDocument);
 
