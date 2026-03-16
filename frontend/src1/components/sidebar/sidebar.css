@@ -1,0 +1,39 @@
+/* Sidebar Container */
+.sidebar {
+  width: 240px;
+  height: 100vh;
+  background-color: #1e293b;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar Items */
+.sidebar-item {
+  padding: 12px 20px;
+}
+
+/* Links */
+.sidebar-item a {
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 15px;
+  display: block;
+  transition: all 0.3s ease;
+}
+
+/* Hover Effect */
+.sidebar-item a:hover {
+  background-color: #334155;
+  padding-left: 10px;
+  border-radius: 6px;
+}
+
+/* Active Link (if using NavLink later) */
+.sidebar-item .active {
+  background-color: #2563eb;
+  border-radius: 6px;
+}
