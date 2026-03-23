@@ -5,6 +5,7 @@ import {
     Briefcase,
     CheckSquare,
     ShieldCheck,
+    FileText,
     LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +19,8 @@ const Sidebar = () => {
         { name: 'Projects', icon: Briefcase, path: '/projects', permission: 'VIEW_PROJECT' },
         { name: 'Tasks', icon: CheckSquare, path: '/tasks', permission: 'VIEW_TASK' },
         { name: 'Roles', icon: ShieldCheck, path: '/roles', permission: 'VIEW_ROLE' },
+        { name: 'Permissions', icon: ShieldCheck, path: '/permissions', permission: 'VIEW_PERMISSION' },
+        { name: 'Documents', icon: FileText, path: '/documents', permission: 'VIEW_DOCUMENT' },
     ];
 
     const filteredItems = menuItems.filter(item =>
