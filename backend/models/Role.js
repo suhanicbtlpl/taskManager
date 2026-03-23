@@ -13,8 +13,14 @@ const roleSchema = new mongoose.Schema({
         default: 'active'
     },
     permissions: [{
-        type: String,
-        required: true
+        name: {
+            type: String,
+            required: true
+        },
+        actions: [{
+            type: String,
+            enum: ['create', 'read', 'update', 'delete']
+        }]
     }]
 }, {
     timestamps: true

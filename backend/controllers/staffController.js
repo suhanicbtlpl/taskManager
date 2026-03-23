@@ -1,12 +1,35 @@
 const User = require('../models/User');
 const asyncHandler = require('../middleware/asyncHandler');
 
-// @desc    Get all staff
+// @desc    Get all staff with pagination and search
 // @route   GET /api/staff
 // @access  Private
 const getStaff = asyncHandler(async (req, res) => {
-    const staff = await User.find({}).populate('role', 'roleName');
-    res.json(staff);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const skip = (page - 1) * limit;
+
+    const query = search ? {
+        $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { email: { $regex: search, $options: 'i' } }
+        ]
+    } : {};
+
+    const total = await User.countDocuments(query);
+    const staff = await User.find(query)
+        .populate('role', 'roleName')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    res.json({
+        data: staff,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+    });
 });
 
 // @desc    Create new staff member

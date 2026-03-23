@@ -5,11 +5,11 @@ const { protect } = require('../middleware/authMiddleware');
 const { checkPermission } = require('../middleware/roleMiddleware');
 
 router.route('/')
-    .get(protect, checkPermission('VIEW_STAFF'), getStaff)
-    .post(protect, checkPermission('CREATE_STAFF'), createStaff);
+    .get(protect, checkPermission('Staff', 'read'), getStaff)
+    .post(protect, checkPermission('Staff', 'create'), createStaff);
 
 router.route('/:id')
-    .put(protect, checkPermission('UPDATE_STAFF'), updateStaff)
-    .delete(protect, checkPermission('DELETE_STAFF'), deleteStaff);
+    .put(protect, checkPermission('Staff', 'update'), updateStaff)
+    .delete(protect, checkPermission('Staff', 'delete'), deleteStaff);
 
 module.exports = router;

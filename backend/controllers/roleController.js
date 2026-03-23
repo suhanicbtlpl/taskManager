@@ -13,21 +13,42 @@ const createRole = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: 'Role already exists' });
     }
 
+    const normalizedPermissions = (permissions || []).filter(p => typeof p === 'object' && p.name);
+
     const role = await Role.create({
         roleName,
-        permissions,
+        permissions: normalizedPermissions,
         status
     });
 
     res.status(201).json(role);
 });
 
-// @desc    Get all roles
+// @desc    Get all roles with pagination and search
 // @route   GET /api/roles
 // @access  Private
 const getRoles = asyncHandler(async (req, res) => {
-    const roles = await Role.find({});
-    res.json(roles);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const skip = (page - 1) * limit;
+
+    const query = search ? {
+        roleName: { $regex: search, $options: 'i' }
+    } : {};
+
+    const total = await Role.countDocuments(query);
+    const roles = await Role.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    res.json({
+        data: roles,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+    });
 });
 
 // @desc    Update role
@@ -38,7 +59,10 @@ const updateRole = asyncHandler(async (req, res) => {
 
     if (role) {
         role.roleName = req.body.roleName || role.roleName;
-        role.permissions = req.body.permissions || role.permissions;
+        // Normalize permissions to ensure legacy data doesn't cause validation errors
+        if (req.body.permissions) {
+            role.permissions = req.body.permissions.filter(p => typeof p === 'object' && p.name);
+        }
         role.status = req.body.status || role.status;
 
         const updatedRole = await role.save();

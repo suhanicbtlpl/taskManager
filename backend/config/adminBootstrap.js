@@ -1,21 +1,35 @@
 const User = require('../models/User');
 const Role = require('../models/Role');
+const Permission = require('../models/Permission');
 
 const bootstrapAdmin = async () => {
     try {
-        // 1. Ensure Admin Role exists
+        // 1. Ensure core permissions exist
+        const coreResources = ['Staff', 'Role', 'Permission', 'Project', 'Task', 'Document'];
+        for (const name of coreResources) {
+            const exists = await Permission.findOne({ name });
+            if (!exists) {
+                await Permission.create({ name });
+                console.log(`✅ Base permission created: ${name}`);
+            }
+        }
+
+        // 2. Ensure Admin Role exists
         let adminRole = await Role.findOne({ roleName: 'Admin' });
         
         if (!adminRole) {
+            // Admin role doesn't strictly need the permissions array filled because 
+            // the middleware/ProtectedRoute checks the roleName itself.
+            // But we'll initialize it with the new structure for consistency.
             adminRole = await Role.create({
                 roleName: 'Admin',
                 status: 'active',
-                permissions: ['ALL'] // Placeholder, but roleMiddleware will bypass for 'Admin'
+                permissions: [] 
             });
             console.log('✅ Admin role created');
         }
 
-        // 2. Ensure Admin User exists
+        // 3. Ensure Admin User exists
         const adminUser = await User.findOne({ email: 'admin@example.com' });
         
         if (!adminUser) {

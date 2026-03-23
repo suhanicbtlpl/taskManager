@@ -5,13 +5,13 @@ const { protect } = require('../middleware/authMiddleware');
 const { checkPermission } = require('../middleware/roleMiddleware');
 
 router.route('/')
-    .get(protect, checkPermission('VIEW_TASK'), getTasks)
-    .post(protect, checkPermission('CREATE_TASK'), createTask);
+    .get(protect, checkPermission('Task', 'read'), getTasks)
+    .post(protect, checkPermission('Task', 'create'), createTask);
 
-router.get('/project/:projectId', protect, getTasksByProject);
+router.get('/project/:projectId', protect, checkPermission('Task', 'read'), getTasksByProject);
 
 router.route('/:id')
-    .put(protect, checkPermission('UPDATE_TASK'), updateTask)
-    .delete(protect, checkPermission('DELETE_TASK'), deleteTask);
+    .put(protect, checkPermission('Task', 'update'), updateTask)
+    .delete(protect, checkPermission('Task', 'delete'), deleteTask);
 
 module.exports = router;

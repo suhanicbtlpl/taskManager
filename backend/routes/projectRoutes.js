@@ -5,11 +5,11 @@ const { protect } = require('../middleware/authMiddleware');
 const { checkPermission } = require('../middleware/roleMiddleware');
 
 router.route('/')
-    .get(protect, checkPermission('VIEW_PROJECT'), getProjects)
-    .post(protect, checkPermission('CREATE_PROJECT'), createProject);
+    .get(protect, checkPermission('Project', 'read'), getProjects)
+    .post(protect, checkPermission('Project', 'create'), createProject);
 
 router.route('/:id')
-    .put(protect, checkPermission('UPDATE_PROJECT'), updateProject)
-    .delete(protect, checkPermission('DELETE_PROJECT'), deleteProject);
+    .put(protect, checkPermission('Project', 'update'), updateProject)
+    .delete(protect, checkPermission('Project', 'delete'), deleteProject);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-const checkPermission = (permission) => {
+const checkPermission = (resource, action) => {
     return (req, res, next) => {
         if (!req.user || !req.user.role) {
             return res.status(403).json({ message: 'No role assigned' });
@@ -9,10 +9,12 @@ const checkPermission = (permission) => {
             return next();
         }
 
-        const hasPermission = req.user.role.permissions.includes(permission);
+        // Object-based permission check
+        const permissions = req.user.role.permissions || [];
+        const resourcePermission = permissions.find(p => p.name === resource);
 
-        if (!hasPermission) {
-            return res.status(403).json({ message: `Access denied: Required permission ${permission}` });
+        if (!resourcePermission || !resourcePermission.actions.includes(action)) {
+            return res.status(403).json({ message: `Access denied: Required permission ${resource}.${action}` });
         }
 
         next();

@@ -2,12 +2,39 @@ const Task = require('../models/Task');
 const Project = require('../models/Project');
 const asyncHandler = require('../middleware/asyncHandler');
 
-// @desc    Get all tasks
+// @desc    Get all tasks with pagination and search
 // @route   GET /api/tasks
 // @access  Private
 const getTasks = asyncHandler(async (req, res) => {
-    const tasks = await Task.find({}).populate('projectId', 'projectName').populate('assignedTo', 'name email').populate('createdBy', 'name');
-    res.json(tasks);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const projectId = req.query.projectId;
+    const skip = (page - 1) * limit;
+
+    const query = {};
+    if (search) {
+        query.taskName = { $regex: search, $options: 'i' };
+    }
+    if (projectId) {
+        query.projectId = projectId;
+    }
+
+    const total = await Task.countDocuments(query);
+    const tasks = await Task.find(query)
+        .populate('projectId', 'projectName')
+        .populate('assignedTo', 'name email')
+        .populate('createdBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    res.json({
+        data: tasks,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+    });
 });
 
 // @desc    Get tasks by project

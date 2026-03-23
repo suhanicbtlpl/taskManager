@@ -5,11 +5,11 @@ const { protect } = require('../middleware/authMiddleware');
 const { checkPermission } = require('../middleware/roleMiddleware');
 
 router.route('/')
-    .get(protect, getRoles)
-    .post(protect, checkPermission('CREATE_ROLE'), createRole);
+    .get(protect, checkPermission('Role', 'read'), getRoles)
+    .post(protect, checkPermission('Role', 'create'), createRole);
 
 router.route('/:id')
-    .put(protect, checkPermission('UPDATE_ROLE'), updateRole)
-    .delete(protect, checkPermission('DELETE_ROLE'), deleteRole);
+    .put(protect, checkPermission('Role', 'update'), updateRole)
+    .delete(protect, checkPermission('Role', 'delete'), deleteRole);
 
 module.exports = router;

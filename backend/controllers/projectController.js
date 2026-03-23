@@ -1,12 +1,33 @@
 const asyncHandler = require('../middleware/asyncHandler');
 const Project = require('../models/Project');
 
-// @desc    Get all projects
+// @desc    Get all projects with pagination and search
 // @route   GET /api/projects
 // @access  Private
 const getProjects = asyncHandler(async (req, res) => {
-    const projects = await Project.find({}).populate('assignedStaff', 'name email').populate('createdBy', 'name');
-    res.json(projects);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const skip = (page - 1) * limit;
+
+    const query = search ? {
+        projectName: { $regex: search, $options: 'i' }
+    } : {};
+
+    const total = await Project.countDocuments(query);
+    const projects = await Project.find(query)
+        .populate('assignedStaff', 'name email')
+        .populate('createdBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+    res.json({
+        data: projects,
+        total,
+        page,
+        pages: Math.ceil(total / limit)
+    });
 });
 
 // @desc    Create new project
