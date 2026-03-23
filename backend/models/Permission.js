@@ -6,7 +6,14 @@ const permissionSchema = new mongoose.Schema({
         required: true,
         unique: true,
         trim: true
-    }
+    },
+    value: {
+  type: String,
+  required: true,
+  unique: true,
+  uppercase: true,
+  trim: true
+}
 }, {
     timestamps: true
 });
